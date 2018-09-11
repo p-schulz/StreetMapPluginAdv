@@ -1,0 +1,8 @@
+{
+	"BuildId": "6b8a6ab2-045f-4b03-93ee-4ac0c9dc9360",
+	"Modules": 
+	{
+		"StreetMapImporting": "libUE4Editor-StreetMapImporting.so",
+		"StreetMapRuntime": "libUE4Editor-StreetMapRuntime.so"
+	}
+}

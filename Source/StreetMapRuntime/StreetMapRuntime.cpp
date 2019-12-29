@@ -1,7 +1,7 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 #include "StreetMapRuntime.h"
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 
 
 class FStreetMapRuntimeModule : public IModuleInterface

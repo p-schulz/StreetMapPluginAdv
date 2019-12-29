@@ -1,4 +1,4 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 #pragma once
 
@@ -34,32 +34,6 @@ public:
 	/** Refreshes the details view and regenerates all the customized layouts. */
 	void RefreshDetails();
 
-	/** Handles build landscape button clicking */
-	FReply OnBuildLandscapeClicked();
-
-	/** Returns whether Landscape can be created or not */
-	bool BuildLandscapeIsEnabled() const;
-
-	/** Updates available landscape layers based on selected material */
-	void RefreshLandscapeLayersList();
-
-	/** Handles build railway button clicking */
-	FReply OnBuildRailwayClicked();
-
-	/** Returns whether railway can be created or not */
-	bool BuildRailwayIsEnabled() const;
-
-	/** Handles build roads button clicking */
-	FReply OnBuildRoadsClicked();
-
-	/** Returns whether roads can be created or not */
-	bool BuildRoadsIsEnabled() const;
-
-	/** Handles build splines button clicking */
-	FReply OnBuildSplinesClicked();
-
-	/** Returns whether splines can be created or not */
-	bool BuildSplinesIsEnabled() const;
 
 protected:
 	/** Holds Selected Street Map Component */

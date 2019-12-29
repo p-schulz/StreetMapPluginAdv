@@ -1,7 +1,7 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
-#include "StreetMapRuntime.h"
 #include "StreetMapComponent.h"
+#include "StreetMapRuntime.h"
 #include "StreetMapSceneProxy.h"
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
 #include "Runtime/Engine/Public/StaticMeshResources.h"
@@ -10,9 +10,8 @@
 #include "PhysicsEngine/BodySetup.h"
 
 #if WITH_EDITOR
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
-#include "LandscapeLayerInfoObject.h"
 #endif //WITH_EDITOR
 
 
@@ -20,7 +19,7 @@
 UStreetMapComponent::UStreetMapComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer),
 	  StreetMap(nullptr),
-	  CachedLocalBounds(FBox(ForceInitToZero))
+	  CachedLocalBounds(ForceInit)
 {
 	// We make sure our mesh collision profile name is set to NoCollisionProfileName at initialization. 
 	// Because we don't have collision data yet!
@@ -46,29 +45,6 @@ UStreetMapComponent::UStreetMapComponent(const FObjectInitializer& ObjectInitial
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> DefaultMaterialAsset(TEXT("/StreetMap/StreetMapDefaultMaterial"));
 	StreetMapDefaultMaterial = DefaultMaterialAsset.Object;
 
-#if WITH_EDITOR
-	if (GEngine)
-	{
-		static ConstructorHelpers::FObjectFinder<UMaterialInterface> DefaultLandscapeMaterialAsset(TEXT("/StreetMap/LandscapeDefaultMaterial"));
-		LandscapeSettings.Material = DefaultLandscapeMaterialAsset.Object;
-
-		TArray<FName> LayerNames = ALandscapeProxy::GetLayersFromMaterial(LandscapeSettings.Material);
-		LandscapeSettings.Layers.Reset(LayerNames.Num());
-		for (int32 i = 0; i < LayerNames.Num(); i++)
-		{
-			const FName& LayerName = LayerNames[i];
-
-			const FString LayerInfoAssetPath = TEXT("/StreetMap/Landscape_") + LayerName.ToString() + TEXT("_DefaultLayerInfo");
-			ConstructorHelpers::FObjectFinder<ULandscapeLayerInfoObject> DefaultLandscapeLayerInfoAsset(*LayerInfoAssetPath);
-
-			FLandscapeImportLayerInfo NewImportLayer;
-			NewImportLayer.LayerName = LayerName;
-			NewImportLayer.LayerInfo = DefaultLandscapeLayerInfoAsset.Object;
-
-			LandscapeSettings.Layers.Add(MoveTemp(NewImportLayer));
-		}
-	}
-#endif
 }
 
 
@@ -196,7 +172,6 @@ void UStreetMapComponent::GenerateCollision()
 	// Rebuild the body setup
 	StreetMapBodySetup->InvalidatePhysicsData();
 	StreetMapBodySetup->CreatePhysicsMeshes();
-
 	UpdateNavigationIfNeeded();
 }
 
@@ -257,7 +232,7 @@ void UStreetMapComponent::GenerateMesh()
 	/////////////////////////////////////////////////////////
 
 
-	CachedLocalBounds = FBox(ForceInitToZero);
+	CachedLocalBounds = FBox( ForceInit );
 	Vertices.Reset();
 	Indices.Reset();
 
@@ -330,7 +305,7 @@ void UStreetMapComponent::GenerateMesh()
 
 				// calculate fill Z for buildings
 				// either use the defined height or extrapolate from building level count
-				float BuildingFillZ = MeshBuildSettings.BuildDefaultZ;
+				float BuildingFillZ = 0.0f;
 				if (bWant3DBuildings) {
 					if (Building.Height > 0) {
 						BuildingFillZ = Building.Height;
@@ -350,7 +325,7 @@ void UStreetMapComponent::GenerateMesh()
 					AddTriangles( TempPoints, TriangulatedVertexIndices, FVector::ForwardVector, FVector::UpVector, BuildingFillColor, MeshBoundingBox );
 				}
 
-				if( bWant3DBuildings && (Building.Height > KINDA_SMALL_NUMBER || Building.BuildingLevels > 0 || MeshBuildSettings.BuildDefaultZ > 0.0) )
+				if( bWant3DBuildings && (Building.Height > KINDA_SMALL_NUMBER || Building.BuildingLevels > 0) )
 				{
 					// NOTE: Lit buildings can't share vertices beyond quads (all quads have their own face normals), so this uses a lot more geometry!
 					if( bWantLitBuildings )
@@ -549,7 +524,7 @@ void UStreetMapComponent::InvalidateMesh()
 {
 	Vertices.Reset();
 	Indices.Reset();
-	CachedLocalBounds = FBoxSphereBounds(FBox(ForceInitToZero));
+	CachedLocalBounds = FBoxSphereBounds(FBox(ForceInit));
 	ClearCollision();
 	// Mark our render state dirty so that CreateSceneProxy can refresh it on demand
 	MarkRenderStateDirty();

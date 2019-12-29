@@ -1,27 +1,9 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 #pragma once
 
-#include "LandscapeProxy.h"
-#include "Components/SplineMeshComponent.h"
 #include "StreetMap.generated.h"
-
-/** Types of miscellaneous ways */
-UENUM(BlueprintType)
-enum EStreetMapMiscWayType
-{
-	/** unknown type */
-	Unknown,
-
-	/** The leisure tag is for places people go in their spare time (e.g. parks, pitches). */
-	Leisure,
-
-	/** Used to describe natural and physical land features (e.g. wood, beach, water). */
-	Natural,
-
-	/** Used to describe the primary use of land by humans (e.g. grass, meadow, forest). */
-	LandUse,
-};
+//#include "OSMFile.h"
 
 
 USTRUCT(BlueprintType)
@@ -74,11 +56,7 @@ public:
 	*/
 	UPROPERTY(Category = StreetMap, EditAnywhere, DisplayName = "Building Level Floor Factor")
 		float BuildingLevelFloorFactor = 300.0f;
-	
-	/** Default building height in centimeters - used if no height info is available */
-	UPROPERTY(Category = StreetMap, EditAnywhere, DisplayName = "Building Level Floor Factor")
-		float BuildDefaultZ = 300.0f;
-	
+
 	/**
 	* If true, buildings mesh will receive light information.
 	* Lit buildings can't share vertices beyond quads (all quads have their own face normals), so this uses a lot more geometry.
@@ -141,250 +119,6 @@ public:
 };
 
 
-/** Identifies a specific type of way */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FWayMatch
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	/** The OSM type this way is marked as */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TEnumAsByte<EStreetMapMiscWayType> Type;
-
-	// Minimal size of the Landscape in each direction around the center of the OpenStreetMap in meters.
-	UPROPERTY(Category = "Landscape", EditAnywhere)
-		FString Category;
-
-	FWayMatch()
-		: Type(EStreetMapMiscWayType::Unknown)
-		, Category(TEXT(""))
-	{
-	}
-
-	FWayMatch(EStreetMapMiscWayType Type, const FString& Category)
-		: Type(Type)
-		, Category(Category)
-	{
-	}
-};
-
-
-/** Maps multiple types of ways to a specific Landscae layer */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FLayerWayMapping
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	// The Layer's name this mapping is used for
-	UPROPERTY(Category = "Landscape", VisibleAnywhere)
-		FName LayerName;
-
-	// Types of ways that make this layer up
-	UPROPERTY(Category = "Landscape", EditAnywhere)
-		TArray<FWayMatch> Matches;
-
-	FLayerWayMapping()
-	{
-	}
-};
-
-
-/** Landscape generation settings */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapLandscapeBuildSettings
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-	// Horizontal distance between elevation data points in meters. Keep in mind that elevation data is usually available in 10-30 meter resolution. Anything in between will be interpolated.
-	UPROPERTY(Category = "Landscape", EditAnywhere, meta = (UIMin = 1, ClampMin = 0.25f, ClampMax = 100.0f))
-		float QuadSize;
-
-	// Minimal size of the Landscape in each direction around the center of the OpenStreetMap in meters.
-	UPROPERTY(Category = "Landscape", EditAnywhere, meta = (UIMin = 1, ClampMin = 256, ClampMax = 16384))
-		int32 Radius;
-
-	// Width of the blend area between layers in meters.
-	UPROPERTY(Category = "Landscape", EditAnywhere, meta = (UIMin = 1, ClampMin = 0.0f, ClampMax = 200.0f))
-		float BlendGauge;
-
-	// Material initially applied to the landscape. Setting a material here exposes properties for setting up layer info based on the landscape blend nodes in the material.
-	UPROPERTY(Category = "Landscape", EditAnywhere, meta = (DisplayName = "Material", ShowForTools = "Landscape"))
-		UMaterialInterface* Material;
-
-	// The landscape layers that will be created. Only layer names referenced in the material assigned above are shown here. Modify the material to add more layers.
-	UPROPERTY(Category = "Landscape", EditAnywhere, NonTransactional, EditFixedSize, meta = (DisplayName = "Layers", ShowForTools = "Landscape"))
-		TArray<FLandscapeImportLayerInfo> Layers;
-
-	// WayTypes corresponding to each layer. Only layer names referenced in the material assigned above are shown here. Modify the material to add more layers.
-	UPROPERTY(Category = "Landscape", EditAnywhere, NonTransactional, EditFixedSize, meta = (DisplayName = "Layer Ways", ShowForTools = "Landscape"))
-		TArray<FLayerWayMapping> LayerWayMapping;
-	
-	FStreetMapLandscapeBuildSettings() 
-		: QuadSize(4.0f)
-		, Radius(8192)
-		, BlendGauge(8.0f)
-		, Material(nullptr)
-	{
-	}
-};
-
-/** Railway generation settings */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapRailwayBuildSettings
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	// Landscape where to put the railways onto
-	UPROPERTY(Category = "Railway", EditAnywhere)
-		ALandscapeProxy* Landscape;
-
-	// Track segment used to build the railroad line via Landscape Spline Meshes.
-	UPROPERTY(Category = "Railway", EditAnywhere)
-		UStaticMesh* RailwayLineMesh;
-
-	// Scales mesh to width of landscape spline
-	UPROPERTY(Category = "Road", EditAnywhere)
-		bool ScaleToWidth = false;
-
-	// Offset of the LandscapeSpline above the ground
-	UPROPERTY(Category = "Railway", EditAnywhere)
-		float ZOffset;
-
-	// Falloff to the side of the LandscapeSpline
-	UPROPERTY(Category = "Road", EditAnywhere)
-		float SideFalloff;
-
-	// Falloff at the end of the LandscapeSpline
-	UPROPERTY(Category = "Road", EditAnywhere)
-		float EndFalloff;
-
-	/** Chooses the forward axis for the spline mesh orientation */
-	UPROPERTY(Category = "Railway", EditAnywhere)
-		TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis;
-
-	/** Chooses the up axis for the spline mesh orientation */
-	UPROPERTY(Category = "Railway", EditAnywhere)
-		TEnumAsByte<ESplineMeshAxis::Type> UpAxis;
-
-	/** Width of the generated splines */
-	UPROPERTY(Category = "Railway", EditAnywhere)
-		float Width;
-
-	FStreetMapRailwayBuildSettings()
-		: Landscape(nullptr)
-		, RailwayLineMesh(nullptr)
-		, ZOffset(0.0f)
-		, SideFalloff(1.5f)
-		, EndFalloff(3.0f)
-		, ForwardAxis(ESplineMeshAxis::X)
-		, UpAxis(ESplineMeshAxis::Z)
-		, Width(200.0f)
-	{
-	}
-};
-
-
-/** Roads as LandscapeSpline generation settings */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapRoadBuildSettings
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	// Landscape where to put the roads onto
-	UPROPERTY(Category = "Road", EditAnywhere)
-		ALandscapeProxy* Landscape;
-
-	// Track segment used to build the roads via Landscape Spline Meshes.
-	UPROPERTY(Category = "Road", EditAnywhere)
-		UStaticMesh* RoadMesh;
-
-	// Scales mesh to width of landscape spline
-	UPROPERTY(Category = "Road", EditAnywhere)
-		bool ScaleToWidth = false;
-
-	// Offset of the LandscapeSpline above the ground
-	UPROPERTY(Category = "Road", EditAnywhere)
-		float ZOffset;
-
-	// Falloff to the side of the LandscapeSpline
-	UPROPERTY(Category = "Road", EditAnywhere)
-		float SideFalloff;
-
-	// Falloff at the end of the LandscapeSpline
-	UPROPERTY(Category = "Road", EditAnywhere)
-		float EndFalloff;
-
-	/** Chooses the forward axis for the spline mesh orientation */
-	UPROPERTY(Category = "Road", EditAnywhere)
-		TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis;
-
-	/** Chooses the up axis for the spline mesh orientation */
-	UPROPERTY(Category = "Road", EditAnywhere)
-		TEnumAsByte<ESplineMeshAxis::Type> UpAxis;
-
-	FStreetMapRoadBuildSettings()
-		: Landscape(nullptr)
-		, RoadMesh(nullptr)
-		, ZOffset(0.0f)
-		, SideFalloff(1.5f)
-		, EndFalloff(3.0f)
-		, ForwardAxis(ESplineMeshAxis::X)
-		, UpAxis(ESplineMeshAxis::Z)
-	{
-	}
-};
-
-
-/** Types of Splines to generate */
-UENUM(BlueprintType)
-enum EStreetMapSplineBuildType
-{
-	/** Cinematic Rig Rail */
-	CinematicRigRail,
-};
-
-
-/** Generic Spline generation settings */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapSplineBuildSettings
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	// Start Actor reference where to look for landscape spline references nearby to start the generated spline
-	UPROPERTY(Category = "Spline", EditAnywhere)
-		AActor* Start;
-
-	// End Actor reference where to look for landscape spline references nearby to end the generated spline
-	UPROPERTY(Category = "Spline", EditAnywhere)
-		AActor* End;
-
-	// Vertical offset of the spline above the landscape splines
-	UPROPERTY(Category = "Spline", EditAnywhere)
-		float ZOffset;
-
-	/** What type of Spline Actor should be generated */
-	UPROPERTY(Category = "Spline", EditAnywhere)
-		TEnumAsByte<EStreetMapSplineBuildType> Type;
-
-	FStreetMapSplineBuildSettings()
-		: Start(nullptr)
-		, End(nullptr)
-		, ZOffset(0.0f)
-		, Type(EStreetMapSplineBuildType::CinematicRigRail)
-	{
-	}
-};
 
 /** Types of roads */
 UENUM( BlueprintType )
@@ -411,33 +145,33 @@ struct STREETMAPRUNTIME_API FStreetMapRoad
 	GENERATED_USTRUCT_BODY()
 
 	/** Name of the road */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	FString RoadName;
 	
 	/** Type of road */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	TEnumAsByte<EStreetMapRoadType> RoadType;
 	
 	/** Nodes along this road, one at each point in the RoadPoints list */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	TArray<int32> NodeIndices;
 
 	/** List of all of the points on this road, one for each node in the NodeIndices list */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	TArray<FVector2D> RoadPoints;
 	
 	// @todo: Performance: Bounding information could be computed at load time if we want to avoid the memory cost of storing it
 
 	/** 2D bounds (min) of this road's points */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	FVector2D BoundsMin;
 	
 	/** 2D bounds (max) of this road's points */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	FVector2D BoundsMax;
 
 	/** True if this node is a one way.  One way nodes are only traversable in the order the nodes are listed in the above array. */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	uint8 bIsOneWay : 1;
 
 
@@ -488,48 +222,16 @@ struct STREETMAPRUNTIME_API FStreetMapRoadRef
 	GENERATED_USTRUCT_BODY()
 
 	/** Index of road in the list of all roads in this street map */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	int32 RoadIndex;
 	
 	/** Index of the point along road where this node exists */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	int32 RoadPointIndex;
 };
 
-/** Nodes have a list of railway refs, one for each railway that intersects this node.  Each railway ref references a railway and also the
-point along that railway where this node exists. */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapRailwayRef
-{
-	GENERATED_USTRUCT_BODY()
 
-	/** Index of railway in the list of all railway in this street map */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-	int32 RailwayIndex;
-
-	/** Index of the point along railway where this node exists */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-	int32 RailwayPointIndex;
-};
-
-
-/** OSM Tag kept for later use */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapTag
-{
-	GENERATED_USTRUCT_BODY()
-
-	/** Key of the OSM Tag */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FName Key;
-
-	/** Value of the OSM Tag */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FName Value;
-};
-
-
-/** Describes a node on a road or railway. Nodes usually connect at least two roads/railways together, but they might also exist at the end of a dead-end street/railroad.  They are sort of like an "intersection". */
+/** Describes a node on a road.  Nodes usually connect at least two roads together, but they might also exist at the end of a dead-end street.  They are sort of like an "intersection". */
 USTRUCT( BlueprintType )
 struct STREETMAPRUNTIME_API FStreetMapNode
 {
@@ -537,24 +239,15 @@ struct STREETMAPRUNTIME_API FStreetMapNode
 	
 	/** All of the roads that intersect this node.  We have references to each of these roads, as well as the point along each
 	    road where this node exists */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
-		TArray<FStreetMapRoadRef> RoadRefs;
-
-	/** All of the Railways that intersect this node.  We have references to each of these railways, as well as the point along each
-		railway where this node exists */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TArray<FStreetMapRailwayRef> RailwayRefs;
-
-	/** All Tags of this Node. Usually empty */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TArray<FStreetMapTag> Tags;
-
-	/** 2D location of this node */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FVector2D Location;
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	TArray<FStreetMapRoadRef> RoadRefs;
 
 	/** Returns this node's index */
 	inline int32 GetNodeIndex( const UStreetMap& StreetMap ) const;
+
+	/** Gets the location of this node */
+	inline FVector2D GetLocation( const UStreetMap& StreetMap ) const;
+
 
 	///
 	/// Utility functions which may be useful for pathfinding algorithms (not used internally.)
@@ -577,62 +270,6 @@ struct STREETMAPRUNTIME_API FStreetMapNode
 };
 
 
-/** Types of railways */
-UENUM(BlueprintType)
-enum EStreetMapRailwayType
-{
-	/** Full sized passenger or freight trains in the standard gauge for the country or state. */
-	Rail,
-
-	/** A higher-standard tram system, normally in its own right-of-way. */
-	LightRail,
-
-	/** A city passenger rail service running mostly grade separated. */
-	Subway,
-
-	/** One or two carriage rail vehicles, usually sharing motor road. */
-	Tram,
-
-	/** Other (monorail, abandoned, construction, disused, funicular, etc.) */
-	OtherRailway,
-};
-
-
-/** A railway */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapRailway
-{
-	GENERATED_USTRUCT_BODY()
-
-	/** Name of the railway */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-	FString Name;
-
-	/** Type of railway */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TEnumAsByte<EStreetMapRailwayType> Type;
-
-	/** Nodes along this railway, one at each point in the Points list */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TArray<int32> NodeIndices;
-
-	/** List of all of the points on this railway */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TArray<FVector2D> Points;
-
-	// @todo: Performance: Bounding information could be computed at load time if we want to avoid the memory cost of storing it
-
-	/** 2D bounds (min) of this railway's points */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FVector2D BoundsMin;
-
-	/** 2D bounds (max) of this railway's points */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FVector2D BoundsMax;
-};
-
-
-
 /** A building */
 USTRUCT( BlueprintType )
 struct STREETMAPRUNTIME_API FStreetMapBuilding
@@ -640,68 +277,148 @@ struct STREETMAPRUNTIME_API FStreetMapBuilding
 	GENERATED_USTRUCT_BODY()
 
 	/** Name of the building */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	FString BuildingName;
 
+	/** Type of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString Type;
+
 	/** Polygon points that define the perimeter of the building */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	TArray<FVector2D> BuildingPoints;
 
 	/** Height of the building in meters (if known, otherwise zero) */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	float Height;
 
 	/** Levels of the building (if known, otherwise zero) */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	int BuildingLevels;
 
 	// @todo: Performance: Bounding information could be computed at load time if we want to avoid the memory cost of storing it
 
 	/** 2D bounds (min) of this building's points */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	FVector2D BoundsMin;
 	
 	/** 2D bounds (max) of this building's points */
-	UPROPERTY( Category=StreetMap, EditAnywhere )
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
 	FVector2D BoundsMax;
 };
 
 
-/** A miscellaneous way */
-USTRUCT(BlueprintType)
-struct STREETMAPRUNTIME_API FStreetMapMiscWay
+/** A amenity */
+USTRUCT( BlueprintType )
+struct STREETMAPRUNTIME_API FStreetMapAmenity
 {
 	GENERATED_USTRUCT_BODY()
 
-	/** Name of the way */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FString Name;
+	/** Name of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString BuildingName;
 
-	/** Category of the way */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FString Category;
+	/** Type of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString Type;
 
-	/** points that define the the way (line or polygon) */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TArray<FVector2D> Points;
+	/** Polygon points that define the perimeter of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	TArray<FVector2D> BuildingPoints;
+
+	/** Height of the building in meters (if known, otherwise zero) */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	float Height;
+
+	/** Levels of the building (if known, otherwise zero) */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	int BuildingLevels;
 
 	// @todo: Performance: Bounding information could be computed at load time if we want to avoid the memory cost of storing it
 
-	/** 2D bounds (min) of this way's points */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FVector2D BoundsMin;
+	/** 2D bounds (min) of this building's points */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FVector2D BoundsMin;
+	
+	/** 2D bounds (max) of this building's points */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FVector2D BoundsMax;
+};
 
-	/** 2D bounds (max) of this way's points */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		FVector2D BoundsMax;
 
-	/** The OSM type this way is marked as */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		TEnumAsByte<EStreetMapMiscWayType> Type;
+/** A barrier */
+USTRUCT( BlueprintType )
+struct STREETMAPRUNTIME_API FStreetMapBarrier
+{
+	GENERATED_USTRUCT_BODY()
 
-	/** Indicates whether this a closed polygon or just a line strip */
-	UPROPERTY(Category = StreetMap, EditAnywhere)
-		bool bIsClosed;
+	/** Name of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString BuildingName;
+
+	/** Type of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString Type;
+
+	/** Polygon points that define the perimeter of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	TArray<FVector2D> BuildingPoints;
+
+	/** Height of the building in meters (if known, otherwise zero) */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	float Height;
+
+	/** Levels of the building (if known, otherwise zero) */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	int BuildingLevels;
+
+	// @todo: Performance: Bounding information could be computed at load time if we want to avoid the memory cost of storing it
+
+	/** 2D bounds (min) of this building's points */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FVector2D BoundsMin;
+	
+	/** 2D bounds (max) of this building's points */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FVector2D BoundsMax;
+};
+
+
+/** A tree */
+USTRUCT( BlueprintType )
+struct STREETMAPRUNTIME_API FStreetMapTree
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** Name of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString BuildingName;
+
+	/** Type of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FString Type;
+
+	/** Polygon points that define the perimeter of the building */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	TArray<FVector2D> BuildingPoints;
+
+	/** Height of the building in meters (if known, otherwise zero) */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	float Height;
+
+	/** Levels of the building (if known, otherwise zero) */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	int BuildingLevels;
+
+	// @todo: Performance: Bounding information could be computed at load time if we want to avoid the memory cost of storing it
+
+	/** 2D bounds (min) of this building's points */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FVector2D BoundsMin;
+	
+	/** 2D bounds (max) of this building's points */
+	UPROPERTY( Category=StreetMap, BlueprintReadOnly, EditAnywhere )
+	FVector2D BoundsMax;
 };
 
 /** A loaded street map */
@@ -731,7 +448,6 @@ public:
 	}
 	
 	/** Gets the nodes on the map (read only.)  Nodes describe intersections between roads */
-	UFUNCTION(BlueprintCallable, Category = "StreetMap")
 	const TArray<FStreetMapNode>& GetNodes() const
 	{
 		return Nodes;
@@ -748,37 +464,50 @@ public:
 	{
 		return Buildings;
 	}
-
+	
 	/** Gets all of the buildings */
 	TArray<FStreetMapBuilding>& GetBuildings()
 	{
 		return Buildings;
 	}
 
-	/** Gets all of the railways (read only) */
-	const TArray<FStreetMapRailway>& GetRailways() const
+
+	/** Gets all of the amenities (read only) */
+	const TArray<FStreetMapAmenity>& GetAmenities() const
 	{
-		return Railways;
+		return Amenities;
 	}
 
-	/** Gets all of the railways */
-	TArray<FStreetMapRailway>& GetRailways()
+	/** Gets all of the amenities */
+	TArray<FStreetMapAmenity>& GetAmenities()
 	{
-		return Railways;
+		return Amenities;
 	}
 
-	/** Gets all of the miscellaneous ways (read only) */
-	const TArray<FStreetMapMiscWay>& GetMiscWays() const
+
+	/** Gets all of the barriers (read only) */
+	const TArray<FStreetMapBarrier>& GetBarriers() const
 	{
-		return MiscWays;
+		return Barriers;
 	}
 
-	/** Gets all of the miscellaneous ways */
-	TArray<FStreetMapMiscWay>& GetMiscWays()
+	/** Gets all of the barriers */
+	TArray<FStreetMapBarrier>& GetBarriers()
 	{
-		return MiscWays;
+		return Barriers;
 	}
 
+	/** Gets all of the trees (read only) */
+	const TArray<FStreetMapTree>& GetTrees() const
+	{
+		return Trees;
+	}
+
+	/** Gets all of the trees */
+	TArray<FStreetMapTree>& GetTrees()
+	{
+		return Trees;
+	}
 
 	/** Gets the bounding box of the map */
 	FVector2D GetBoundsMin() const
@@ -790,14 +519,6 @@ public:
 		return BoundsMax;
 	}
 
-	double GetOriginLongitude() const
-	{
-		return OriginLongitude;
-	}
-	double GetOriginLatitude() const
-	{
-		return OriginLatitude;
-	}
 
 protected:
 	
@@ -813,13 +534,17 @@ protected:
 	UPROPERTY( Category=StreetMap, VisibleAnywhere)
 	TArray<FStreetMapBuilding> Buildings;
 
-	/** List of railways */
-	UPROPERTY(Category = StreetMap, VisibleAnywhere)
-	TArray<FStreetMapRailway> Railways;
+	/** List of all amenities on the street map */
+	UPROPERTY( Category=StreetMap, VisibleAnywhere)
+	TArray<FStreetMapAmenity> Amenities;
 
-	/** List of all miscellaneous ways on the street map */
-	UPROPERTY(Category = StreetMap, VisibleAnywhere)
-	TArray<FStreetMapMiscWay> MiscWays;
+	/** List of all barriers on the street map */
+	UPROPERTY( Category=StreetMap, VisibleAnywhere)
+	TArray<FStreetMapBarrier> Barriers;
+
+	/** List of all trees on the street map */
+	UPROPERTY( Category=StreetMap, VisibleAnywhere)
+	TArray<FStreetMapTree> Trees;
 
 	/** 2D bounds (min) of this map's roads and buildings */
 	UPROPERTY( Category=StreetMap, VisibleAnywhere)
@@ -828,13 +553,6 @@ protected:
 	/** 2D bounds (max) of this map's roads and buildings */
 	UPROPERTY( Category=StreetMap, VisibleAnywhere)
 	FVector2D BoundsMax;
-
-	/** Longitude Origin of the SpatialReferenceSystem */
-	UPROPERTY(Category = StreetMap, VisibleAnywhere)
-	double OriginLongitude;
-	/** Latitude Origin of the SpatialReferenceSystem */
-	UPROPERTY(Category = StreetMap, VisibleAnywhere)
-	double OriginLatitude;
 
 #if WITH_EDITORONLY_DATA
 	/** Importing data and options used for this mesh */
@@ -1080,6 +798,14 @@ inline bool FStreetMapNode::IsDeadEnd( const UStreetMap& StreetMap ) const
 	}
 
 	return false;
+}
+
+
+inline FVector2D FStreetMapNode::GetLocation( const UStreetMap& StreetMap ) const
+{
+	const FStreetMapRoadRef& MyFirstRoadRef = RoadRefs[ 0 ];
+	const FVector2D Location = StreetMap.GetRoads()[ MyFirstRoadRef.RoadIndex ].RoadPoints[ MyFirstRoadRef.RoadPointIndex ];
+	return Location;
 }
 
 

@@ -1,8 +1,8 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
-
-#include "StreetMapImporting.h"
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 #include "StreetMapComponentDetails.h"
+
+#include "StreetMapImporting.h"
 
 #include "SlateBasics.h"
 #include "RawMesh.h"
@@ -14,18 +14,15 @@
 #include "IDetailsView.h"
 #include "IDetailCustomization.h"
 #include "AssetRegistryModule.h"
-#include "DlgPickAssetPath.h"
+#include "Dialogs/DlgPickAssetPath.h"
 #include "IDetailCustomization.h"
-#include "SNotificationList.h"
-#include "NotificationManager.h"
-#include "AssertionMacros.h"
+#include "Widgets/Notifications/SNotificationList.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Misc/AssertionMacros.h"
 
 
 #include "StreetMapComponent.h"
-#include "GISUtils/Elevation.h"
-#include "StreetMapRailway.h"
-#include "StreetMapRoad.h"
-#include "StreetMapSplineTools.h"
+
 
 #define LOCTEXT_NAMESPACE "StreetMapComponentDetails"
 
@@ -149,6 +146,7 @@ void FStreetMapComponentDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBu
 
 	if (bCanCreateMeshAsset)
 	{
+
 		const int32 NumVertices = SelectedStreetMapComponent->GetRawMeshVertices().Num();
 		const FString NumVerticesToString = TEXT("Vertex Count : ") + FString::FromInt(NumVertices);
 
@@ -188,106 +186,6 @@ void FStreetMapComponentDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBu
 			];
 	}
 
-	// Landscape settings
-	{
-		IDetailCategoryBuilder& LandscapeCategory = DetailBuilder.EditCategory("Landscape", FText::GetEmpty(), ECategoryPriority::Important);
-		LandscapeCategory.InitiallyCollapsed(false);
-
-		LandscapeCategory.AddCustomRow(FText::GetEmpty(), false)
-			[
-				SAssignNew(TempHorizontalBox, SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			[
-				SNew(SButton)
-				.ToolTipText(LOCTEXT("BuildLandscape_Tooltip", "Download elevation model and build a Landscape beneath the OpenStreetMap."))
-			.OnClicked(this, &FStreetMapComponentDetails::OnBuildLandscapeClicked)
-			.IsEnabled(this, &FStreetMapComponentDetails::BuildLandscapeIsEnabled)
-			.HAlign(HAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("BuildLandscape", "Build Landscape"))
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-			]
-			]
-			];
-
-		TSharedRef<IPropertyHandle> PropertyHandle_Material = DetailBuilder.GetProperty("LandscapeSettings.Material");
-		PropertyHandle_Material->SetOnPropertyValueChanged(FSimpleDelegate::CreateSP(this, &FStreetMapComponentDetails::RefreshLandscapeLayersList));
-
-		RefreshLandscapeLayersList();
-	}
-
-	// Railway settings
-	{
-		IDetailCategoryBuilder& RailwayCategory = DetailBuilder.EditCategory("Railway", FText::GetEmpty(), ECategoryPriority::Important);
-		RailwayCategory.InitiallyCollapsed(false);
-
-		RailwayCategory.AddCustomRow(FText::GetEmpty(), false)
-			[
-				SAssignNew(TempHorizontalBox, SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			[
-				SNew(SButton)
-				.ToolTipText(LOCTEXT("BuildRailway_Tooltip", "Generate railways onto the Landscape based on the OpenStreetMap data."))
-			.OnClicked(this, &FStreetMapComponentDetails::OnBuildRailwayClicked)
-			.IsEnabled(this, &FStreetMapComponentDetails::BuildRailwayIsEnabled)
-			.HAlign(HAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("BuildRailway", "Build Railway"))
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-			]
-			]
-			];
-	}
-
-	// Roads settings
-	{
-		IDetailCategoryBuilder& RoadCategory = DetailBuilder.EditCategory("Roads", FText::GetEmpty(), ECategoryPriority::Important);
-		RoadCategory.InitiallyCollapsed(false);
-
-		RoadCategory.AddCustomRow(FText::GetEmpty(), false)
-			[
-				SAssignNew(TempHorizontalBox, SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			[
-				SNew(SButton)
-				.ToolTipText(LOCTEXT("BuildRoads_Tooltip", "Generate roads onto the Landscape based on the OpenStreetMap data."))
-			.OnClicked(this, &FStreetMapComponentDetails::OnBuildRoadsClicked)
-			.IsEnabled(this, &FStreetMapComponentDetails::BuildRoadsIsEnabled)
-			.HAlign(HAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("BuildRoads", "Build Roads"))
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-			]
-			]
-			];
-	}
-
-	// Spline settings
-	{
-		IDetailCategoryBuilder& RailwayCategory = DetailBuilder.EditCategory("Splines", FText::GetEmpty(), ECategoryPriority::Important);
-		RailwayCategory.InitiallyCollapsed(false);
-
-		RailwayCategory.AddCustomRow(FText::GetEmpty(), false)
-			[
-				SAssignNew(TempHorizontalBox, SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			[
-				SNew(SButton)
-				.ToolTipText(LOCTEXT("BuildSplines_Tooltip", "Generate Spline Actors along the shortest path connected Landscape Splines."))
-			.OnClicked(this, &FStreetMapComponentDetails::OnBuildSplinesClicked)
-			.IsEnabled(this, &FStreetMapComponentDetails::BuildSplinesIsEnabled)
-			.HAlign(HAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("BuildSplines", "Build Splines"))
-			.Font(IDetailLayoutBuilder::GetDetailFont())
-			]
-			]
-			];
-	}
 }
 
 bool FStreetMapComponentDetails::HasValidMeshData() const
@@ -476,204 +374,6 @@ void FStreetMapComponentDetails::RefreshDetails()
 	{
 		LastDetailBuilderPtr->ForceRefreshDetails();
 	}
-}
-
-FReply FStreetMapComponentDetails::OnBuildLandscapeClicked()
-{
-	if (SelectedStreetMapComponent != nullptr)
-	{
-		BuildLandscape(SelectedStreetMapComponent, SelectedStreetMapComponent->LandscapeSettings);
-
-		// regenerates details panel layouts, to take in consideration new changes.
-		RefreshDetails();
-	}
-
-	return FReply::Handled();
-}
-
-bool FStreetMapComponentDetails::BuildLandscapeIsEnabled() const
-{
-	if (!SelectedStreetMapComponent || !SelectedStreetMapComponent->LandscapeSettings.Material)
-	{
-		return false;
-	}
-
-	for (int32 i = 0; i < SelectedStreetMapComponent->LandscapeSettings.Layers.Num(); ++i)
-	{
-		if (!SelectedStreetMapComponent->LandscapeSettings.Layers[i].LayerInfo)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-void FStreetMapComponentDetails::RefreshLandscapeLayersList()
-{
-	if (!SelectedStreetMapComponent) return;
-
-	UMaterialInterface* Material = SelectedStreetMapComponent->LandscapeSettings.Material;
-	TArray<FName> LayerNames = ALandscapeProxy::GetLayersFromMaterial(Material);
-
-	const TArray<FLandscapeImportLayerInfo> OldLayersList = MoveTemp(SelectedStreetMapComponent->LandscapeSettings.Layers);
-	const TArray<FLayerWayMapping> OldLayerWayMapping = MoveTemp(SelectedStreetMapComponent->LandscapeSettings.LayerWayMapping);
-	SelectedStreetMapComponent->LandscapeSettings.Layers.Reset(LayerNames.Num());
-	SelectedStreetMapComponent->LandscapeSettings.LayerWayMapping.Reset(LayerNames.Num());
-
-	for (int32 i = 0; i < LayerNames.Num(); i++)
-	{
-		const FName& LayerName = LayerNames[i];
-
-		// Find or recreate this layer.
-		{
-			bool bFound = false;
-			FLandscapeImportLayerInfo NewImportLayer;
-			for (int32 j = 0; j < OldLayersList.Num(); j++)
-			{
-				if (OldLayersList[j].LayerName == LayerName)
-				{
-					NewImportLayer = OldLayersList[j];
-					bFound = true;
-					break;
-				}
-			}
-			if (!bFound)
-			{
-				NewImportLayer.LayerName = LayerName;
-			}
-			SelectedStreetMapComponent->LandscapeSettings.Layers.Add(MoveTemp(NewImportLayer));
-		}
-
-		// Find or recreate the way mapping for this layer.
-		{
-			bool bFound = false;
-			FLayerWayMapping NewLayerWayMapping;
-			for (int32 j = 0; j < OldLayerWayMapping.Num(); j++)
-			{
-				if (OldLayerWayMapping[j].LayerName == LayerName)
-				{
-					NewLayerWayMapping = OldLayerWayMapping[j];
-					bFound = true;
-					break;
-				}
-			}
-
-			if (!bFound)
-			{
-				NewLayerWayMapping.LayerName = LayerName;
-
-				if (LayerName == "Grass")
-				{
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("grass")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("village_green")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("meadow")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("farmland")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::Leisure, TEXT("park")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("plant_nursery")));
-					// might be inappropiate - in one usecase the area is marked industrial (should default to concrete) but grass fits it better
-					// TODO: make LayerWayMapping better configurable in editor
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("industrial")));
-			
-				}
-				else if (LayerName == "Wood")
-				{
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::LandUse, TEXT("forest")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::Natural, TEXT("wood")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::Natural, TEXT("scrub")));
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::Natural, TEXT("nature_reserve")));
-				}
-				else if (LayerName == "Water")
-				{
-					NewLayerWayMapping.Matches.Add(FWayMatch(EStreetMapMiscWayType::Natural, TEXT("water")));
-				}
-			}
-			SelectedStreetMapComponent->LandscapeSettings.LayerWayMapping.Add(MoveTemp(NewLayerWayMapping));
-		}
-	}
-}
-
-
-FReply FStreetMapComponentDetails::OnBuildRailwayClicked()
-{
-	if (SelectedStreetMapComponent != nullptr)
-	{
-		BuildRailway(SelectedStreetMapComponent, SelectedStreetMapComponent->RailwaySettings);
-
-		// regenerates details panel layouts, to take in consideration new changes.
-		RefreshDetails();
-	}
-
-	return FReply::Handled();
-}
-
-bool FStreetMapComponentDetails::BuildRailwayIsEnabled() const
-{
-	if (!SelectedStreetMapComponent || 
-		!SelectedStreetMapComponent->RailwaySettings.RailwayLineMesh ||
-		!SelectedStreetMapComponent->RailwaySettings.Landscape)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
-FReply FStreetMapComponentDetails::OnBuildRoadsClicked()
-{
-	if (SelectedStreetMapComponent != nullptr)
-	{
-		BuildRoads(SelectedStreetMapComponent, SelectedStreetMapComponent->RoadSettings, SelectedStreetMapComponent->MeshBuildSettings);
-
-		// regenerates details panel layouts, to take in consideration new changes.
-		RefreshDetails();
-	}
-
-	return FReply::Handled();
-}
-
-bool FStreetMapComponentDetails::BuildRoadsIsEnabled() const
-{
-	if (!SelectedStreetMapComponent ||
-		!SelectedStreetMapComponent->RoadSettings.RoadMesh ||
-		!SelectedStreetMapComponent->RoadSettings.Landscape)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
-FReply FStreetMapComponentDetails::OnBuildSplinesClicked()
-{
-	if (SelectedStreetMapComponent != nullptr)
-	{
-		BuildSplines(
-			SelectedStreetMapComponent, 
-			SelectedStreetMapComponent->SplineSettings,
-			SelectedStreetMapComponent->RailwaySettings.Landscape);
-
-		// regenerates details panel layouts, to take in consideration new changes.
-		RefreshDetails();
-	}
-
-	return FReply::Handled();
-}
-
-bool FStreetMapComponentDetails::BuildSplinesIsEnabled() const
-{
-	if (!SelectedStreetMapComponent ||
-		!SelectedStreetMapComponent->SplineSettings.Start ||
-		!SelectedStreetMapComponent->SplineSettings.End ||
-		!SelectedStreetMapComponent->RailwaySettings.Landscape ||
-		!SelectedStreetMapComponent->RailwaySettings.Landscape->SplineComponent)
-	{
-		return false;
-	}
-
-	return true;
 }
 
 #undef LOCTEXT_NAMESPACE

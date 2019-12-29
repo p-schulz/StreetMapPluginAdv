@@ -1,8 +1,8 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 #include "StreetMapImporting.h"
 #include "StreetMapAssetTypeActions.h"
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 #include "StreetMapStyle.h"
 #include "StreetMapComponentDetails.h"
 

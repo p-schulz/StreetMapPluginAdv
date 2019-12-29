@@ -1,4 +1,4 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 #pragma once
 
 class FPolygonTools
@@ -15,7 +15,7 @@ public:
 	/** Determines if the specified point is inside the triangle defined by the three triangle corners */
 	static inline bool IsPointInsideTriangle( const FVector2D TriangleA, const FVector2D TriangleB, const FVector2D TriangleC, const FVector2D Point );
 
-	/** Given a 2D polygon and a point, determines whether the point is inside the polygon.  Supports concave polygons.  If the point is exactly on the polygon boundary, the return value could be either false or true. */
+	/** Given a 2D polygon and a point, determines whether the point is inside the polygon.  Supports convex polygons.  If the point is exactly on the polygon boundary, the return value could be either false or true. */
 	static inline bool IsPointInsidePolygon( const TArray<FVector2D>& Polygon, const FVector2D Point );
 
 
@@ -65,7 +65,7 @@ bool FPolygonTools::IsPointInsidePolygon( const TArray<FVector2D>& Polygon, cons
 
 	for( int CornerIndex = 0; CornerIndex < NumCorners; CornerIndex++ )
 	{
-		if( ( (Polygon[ CornerIndex ].Y < Point.Y && Polygon[ PreviousCornerIndex ].Y >= Point.Y) || (Polygon[ PreviousCornerIndex ].Y < Point.Y && Polygon[ CornerIndex ].Y >= Point.Y) ) && 
+		if( ( ( Polygon[ CornerIndex ].Y < Point.Y && Polygon[ PreviousCornerIndex ].Y >= Point.Y ) || ( Polygon[ PreviousCornerIndex ].Y < Point.Y && Polygon[ CornerIndex ].Y >= Point.Y ) ) && 
 			( Polygon[ CornerIndex ].X <= Point.X || Polygon[ PreviousCornerIndex ].X <= Point.X ) )
 		{
 			bIsInside ^= ( Polygon[ CornerIndex ].X + ( Point.Y - Polygon[ CornerIndex ].Y ) / ( Polygon[ PreviousCornerIndex ].Y - Polygon[ CornerIndex ].Y )*( Polygon[ PreviousCornerIndex ].X - Polygon[ CornerIndex ].X ) < Point.X );

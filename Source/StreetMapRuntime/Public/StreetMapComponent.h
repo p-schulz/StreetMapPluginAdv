@@ -1,10 +1,10 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 #pragma once
 
 #include "StreetMap.h"
 #include "Components/MeshComponent.h"
 #include "Interfaces/Interface_CollisionDataProvider.h"
-#include "StreetMapSceneProxy.h"
+#include "../StreetMapSceneProxy.h"
 #include "StreetMapComponent.generated.h"
 
 
@@ -25,11 +25,56 @@ public:
 	UStreetMapComponent(const class FObjectInitializer& ObjectInitializer);
 
 	/** @return Gets the street map object associated with this component */
-	UFUNCTION(BlueprintCallable, Category = "StreetMap")
-	UStreetMap* GetStreetMap()
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") UStreetMap* GetStreetMap()
 	{
 		return StreetMap;
 	}
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") TArray<FStreetMapRoad>& GetRoadsOSM()
+	{
+		return StreetMap->GetRoads();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") TArray<FStreetMapNode>& GetNodesOSM()
+	{
+		return StreetMap->GetNodes();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") TArray<FStreetMapBuilding>& GetBuildingsOSM()
+	{
+		return StreetMap->GetBuildings();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") TArray<FStreetMapBarrier>& GetBarriersOSM()
+	{
+		return StreetMap->GetBarriers();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") TArray<FStreetMapAmenity>& GetAmenitiesOSM()
+	{
+		return StreetMap->GetAmenities();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") TArray<FStreetMapTree>& GetTreesOSM()
+	{
+		return StreetMap->GetTrees();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") FVector2D GetBoundsMinOSM()
+	{
+		return StreetMap->GetBoundsMin();
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "StreetMap") FVector2D GetBoundsMaxOSM()
+	{
+		return StreetMap->GetBoundsMax();
+	}
+
+	//////////////////////////
+	// Additional OSM Tags: //
+	//////////////////////////
+
+
+
 
 	/** Returns StreetMap asset object name  */
 	FString GetStreetMapAssetName() const;
@@ -128,6 +173,8 @@ public:
 	/** Rebuilds the graphics and physics mesh representation if we don't have one right now.  Designed to be called on demand. */
 	void BuildMesh();
 
+
+
 protected:
 
 	/** Giving a default material to the mesh if no valid material is already assigned or materials array is empty. */
@@ -158,23 +205,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "StreetMap")
 		FStreetMapCollisionSettings CollisionSettings;
 
-	UPROPERTY(EditAnywhere, Category = "Landscape")
-		FStreetMapLandscapeBuildSettings LandscapeSettings;
-
-	UPROPERTY(EditAnywhere, Category = "Railway")
-		FStreetMapRailwayBuildSettings RailwaySettings;
-
-	UPROPERTY(EditAnywhere, Category = "Roads")
-		FStreetMapRoadBuildSettings RoadSettings;
-
-	UPROPERTY(EditAnywhere, Category = "Splines")
-		FStreetMapSplineBuildSettings SplineSettings;
-
 	//** Physics data for mesh collision. */
 	UPROPERTY(Transient)
 		UBodySetup* StreetMapBodySetup;
 
-	friend class FStreetMapComponentDetails;
 
 protected:
 	//

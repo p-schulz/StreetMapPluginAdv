@@ -1,7 +1,9 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 #pragma once
+ 	
 
+#include "ActorFactories/ActorFactory.h"
 #include "StreetMapActorFactory.generated.h"
 
 UCLASS()

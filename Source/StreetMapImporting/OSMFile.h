@@ -1,8 +1,7 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 #pragma once
 
 #include "FastXml.h"
-#include "GISUtils/SpatialReferenceSystem.h"
 
 
 /** OpenStreetMap file loader */
@@ -22,74 +21,288 @@ public:
 
 
 	struct FOSMWayInfo;
-
+		
 	/** Types of ways */
 	enum class EOSMWayType
 	{
-		/** Used for identifying any kind of road, street or path. */
-		Highway,
+		///
+		/// ROADS
+		///
+		
+		/** A restricted access major divided highway, normally with 2 or more running lanes plus emergency hard shoulder. Equivalent to the Freeway, Autobahn, etc. */
+		Motorway,
 
-		/** Including light rail, mainline railways, metros, monorails and Trams. */
+		/** The link roads (sliproads/ramps) leading to/from a motorway from/to a motorway or lower class highway. Normally with the same motorway restrictions. */
+		Motorway_Link,
+
+		/** The most important roads in a country's system that aren't motorways. (Need not necessarily be a divided highway.) */
+		Trunk,
+
+		/** The link roads (sliproads/ramps) leading to/from a trunk road from/to a trunk road or lower class highway. */
+		Trunk_Link,
+
+		/** The next most important roads in a country's system. (Often link larger towns.) */
+		Primary,
+
+		/** The link roads (sliproads/ramps) leading to/from a primary road from/to a primary road or lower class highway. */
+		Primary_Link,
+
+		/** The next most important roads in a country's system. (Often link smaller towns and villages.) */
+		Secondary,
+
+		/** The link roads (sliproads/ramps) leading to/from a secondary road from/to a secondary road or lower class highway. */
+		Secondary_Link,
+
+		/** The next most important roads in a country's system. */
+		Tertiary,
+
+		/** The link roads (sliproads/ramps) leading to/from a tertiary road from/to a tertiary road or lower class highway. */
+		Tertiary_Link,
+
+		/** Roads which are primarily lined with and serve as an access to housing. */
+		Residential,
+
+		/** For access roads to, or within an industrial estate, camp site, business park, car park etc. */
+		Service,
+
+		/** The least most important through roads in a country's system, i.e. minor roads of a lower classification than tertiary, but which serve a purpose other than access to properties. */
+		Unclassified,
+
+
+		///
+		/// NON-ROADS
+		///
+		
+		/** Residential streets where pedestrians have legal priority over cars, speeds are kept very low and where children are allowed to play on the street. */
+		Living_Street,
+
+		/** For roads used mainly/exclusively for pedestrians in shopping and some residential areas which may allow access by motorised vehicles only for very limited periods of the day. */
+		Pedestrian,
+
+		/** Roads for agricultural or forestry uses etc, often rough with unpaved/unsealed surfaces, that can be used only by off-road vehicles (4WD, tractors, ATVs, etc.) */
+		Track,
+
+		/** A busway where the vehicle guided by the way (though not a railway) and is not suitable for other traffic. */
+		Bus_Guideway,
+
+		/** A course or track for (motor) racing */
+		Raceway,
+
+		/** A rail for trains or trams */
 		Railway,
 
-		/** Used to mark areas as a building. */
+		/** A road where the mapper is unable to ascertain the classification from the information available. */
+		Road,
+
+
+		///
+		/// PATHS
+		///
+		
+		/** For designated footpaths; i.e., mainly/exclusively for pedestrians. This includes walking tracks and gravel paths. */
+		Footway,
+
+		/** For designated cycleways. */
+		Cycleway,
+
+		/** Paths normally used by horses */
+		Bridleway,
+
+		/** For flights of steps (stairs) on footways. */
+		Steps,
+
+		/** A non-specific path. */
+		Path,
+
+
+		///
+		/// SIDEWALK
+		///
+
+		/** Specifies that the highway has sidewalks on both sides, on one side or no sidewalk at all  */
+		Sidewalk, 
+
+		
+		///
+		/// LIFECYCLE
+		///
+		
+		/** For planned roads, use with proposed=* and also proposed=* with a value of the proposed highway value. */
+		Proposed,
+
+		/** For roads under construction. */
+		Construction,
+
+
+		///
+		/// BUILDINGS
+		///
+
+		/** A bridge */
+		Bridge,
+
+		/** Office building */
+		Office,
+
+		/** House */
+		House,
+		
+		/** Commercial building */
+		Commercial,
+
+		/** Kiosk */
+		Kiosk,
+
+		/** Warehouse */
+		Warehouse,
+
+		/** Supermarket */
+		Supermarket,
+
+		/** Church */
+		Church,
+
+		/** Shed */
+		Shed,
+
+		/** A roofing structure with open sides */
+		Roof,
+
+		/** Building entrance */
+		Entrance,
+
+		/** Default type of building.  A general catch-all. */
 		Building,
 
-		/** The leisure tag is for places people go in their spare time (e.g. parks, pitches). */
-		Leisure,
 
-		/** Used to describe natural and physical land features (e.g. wood, beach, water). */
+		///
+		/// BARRIERS
+		///
+
+		/** One or more solid pillars **/
+		Bollard,
+
+		/** A freestanding, often metal, structure */
+		Fence,
+
+		/** Line of closely spaced shrubs */
+		Hedge,
+
+		/** Stone edging to a pavement or raised path */
+		Kerb,
+
+		/** A freestanding solid structure for restriction */
+		Wall,
+
+		/** A default, non-specific barrier. */
+		Barrier,
+
+
+		///
+		/// AMENITIES
+		///
+
+		/** post_box. */
+		PostBox,
+
+		/** waste basket */
+		WasteBasket,
+
+		/** Place where canal boaters etc dump rubbish */
+		WasteDisposal,
+
+		/** Recycling facilities */
+		Recycling,
+
+		/** vending machine **/
+		Vending,
+
+		/** Parking for bicycles  */
+		BicycleParking,
+
+		/** May also be tagged as public_transportation */
+		BusStop,
+
+		/** Gas Station */
+		Fuel,
+
+		/** Car park. Node */
+		Parking,
+
+		/** Car park space. Areas */
+		ParkingSpace,
+
+		/** A place where taxis wait for passengers */
+		Taxi,
+
+		/** ATM or cash point */
+		ATM,
+
+		/** Pharmacy */
+		Pharmacy,
+
+		/** Public visible Clock */
+		Clock,
+
+		/** Public toilets */
+		Toilet,
+
+		/** A default, non-specific amenity. */
+		Amenity,
+
+
+		///
+		/// ADVERTISING
+		///
+
+		/** Billboard **/
+		Billboard,
+
+		/** Default, general catch-all */
+		Advertising,
+
+
+		///
+		/// POWER
+		///
+
+		/** A Street Cabinet */
+		StreetCabinet,
+
+		/** A power box */
+		PowerBox,
+
+		/** General default object */
+		Power,
+
+
+		///
+		/// SUPPORT
+		///
+
+		/** A default wire **/
+		Wire,
+
+		/** General support object */
+		Support,
+
+
+		///
+		/// NATURAL
+		///
+
+		/** A default wire **/
+		Tree,
+
+		/** General nature object */
 		Natural,
 
-		/** Used to describe the primary use of land by humans (e.g. grass, meadow, forest). */
-		LandUse,
 
+		///
+		/// UNSUPPORTED
+		/// 
+		
 		/** Currently unrecognized type */
-		Other,
-	};
-
-	/** Types of a relations we support - there are many, but most are not yet relevant */
-	enum class 	EOSMRelationType
-	{
-		///** Route - like a street network, e.g. highway A5 as a whole with all ways making up the route */
-		//Route,
-
-		/** Boundary - marking non renderable lines defining borders of land zones, city borders, etc. - useful to switch rendering modes */
-		Boundary,
-
-		/** Multipolygon - has one outer and unrestricted amount of inners - a forest might be modeled like that */
-		Multipolygon,
-
-		/** Currently ignored types - Route (can be enabled, but bloats the imported file), TMC, Turn-Restrictions, Election, RouteMaster, Network */
-		Other,
-	};
-
-	/** Types of a relations member - node, way or another relation */
-	enum class EOSMRelationMemberType
-	{
-		/** Node */
-		Node,
-
-		/** Way */
-		Way,
-
-		/** Relation */
-		Relation,
-
-		/** Unrecognized */
-		Other,
-	};
-
-	/** Types of a relations role - outer or inner */
-	enum class EOSMRelationMemberRole
-	{
-		/** Outer */
-		Outer,
-
-		/** Inner */
-		Inner,
-
-		/** Unrecognized */
 		Other,
 	};
 
@@ -102,57 +315,28 @@ public:
 		// Index of the node in the way's array of nodes
 		int32 NodeIndex;
 	};
-
-	struct FOSMTag
-	{
-		FName Key;
-		FName Value;
-	};
-
+		
+		
 	struct FOSMNodeInfo
 	{
 		double Latitude;
 		double Longitude;
-		TArray<FOSMTag> Tags;
 		TArray<FOSMWayRef> WayRefs;
 	};
+		
 		
 	struct FOSMWayInfo
 	{
 		FString Name;
 		FString Ref;
-		int64 Id;
-
 		TArray<FOSMNodeInfo*> Nodes;
 		EOSMWayType WayType;
-		/** subtype according to WayType */
-		FString Category;
-
-		///
-		/// BUILDING
-		///
+		FString MType;
 		double Height;
 		int32 BuildingLevels;
 
-		///
-		/// HIGHWAY
-		///
-		/** If true, way is only traversable in the order the nodes are listed in the Nodes list */
+		// If true, way is only traversable in the order the nodes are listed in the Nodes list
 		uint8 bIsOneWay : 1;
-	};
-
-	struct FOSMRelationMember
-	{
-		EOSMRelationMemberType Type;
-		EOSMRelationMemberRole Role;
-		int64 Ref;
-	};
-
-	struct FOSMRelation
-	{
-		EOSMRelationType Type;
-		TArray<FOSMRelationMember*> Members;
-		TArray<FOSMTag> Tags;
 	};
 
 	// Minimum latitude/longitude bounds
@@ -164,20 +348,12 @@ public:
 	// Average Latitude (roughly the center of the map)
 	double AverageLatitude = 0.0;
 	double AverageLongitude = 0.0;
-
-	FSpatialReferenceSystem SpatialReferenceSystem;
-
+		
 	// All ways we've parsed
 	TArray<FOSMWayInfo*> Ways;
-
-	// All relations we've parsed
-	TArray<FOSMRelation*> Relations;
 		
 	// Maps node IDs to info about each node
 	TMap<int64, FOSMNodeInfo*> NodeMap;
-
-	// Maps node IDs to info about each node
-	TMap<int64, FOSMWayInfo*> WayMap;
 
 protected:
 
@@ -195,13 +371,9 @@ protected:
 	{
 		Root,
 		Node,
-		Node_Tag,
 		Way,
 		Way_NodeRef,
-		Way_Tag,
-		Relation,
-		Relation_Member,
-		Relation_Tag
+		Way_Tag
 	};
 		
 	// Current state of parser
@@ -209,33 +381,15 @@ protected:
 		
 	// ID of node that is currently being parsed
 	int64 CurrentNodeID;
-
-	// ID of way that is currently being parsed
-	int64 CurrentWayID;
-
-	// ID of relation that is currently being parsed
-	int64 CurrentRelationID;
-
+		
 	// Node that is currently being parsed
 	FOSMNodeInfo* CurrentNodeInfo;
 		
 	// Way that is currently being parsed
 	FOSMWayInfo* CurrentWayInfo;
-
-	// Relation that is currently being parsed
-	FOSMRelation* CurrentRelation;
-
-	// Relation meber that is currently being parsed
-	FOSMRelationMember* CurrentRelationMember;
-
+		
 	// Current way's tag key string
 	const TCHAR* CurrentWayTagKey;
-
-	// Current nodes's tag key string
-	const TCHAR* CurrentNodeTagKey;
-
-	// Current relation's tag key string
-	const TCHAR* CurrentRelationTagKey;
 };
 
 

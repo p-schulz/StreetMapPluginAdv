@@ -1,7 +1,7 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 #pragma once
 
 #include "EngineMinimal.h"
-#include "Classes/Engine/Engine.h"	// For UEngine
+#include "Engine/Engine.h"	// For UEngine
 #include "EngineGlobals.h"	// For GEngine
 

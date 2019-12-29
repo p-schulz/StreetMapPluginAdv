@@ -1,12 +1,12 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
 namespace UnrealBuildTool.Rules
 {
 	public class StreetMapRuntime : ModuleRules
 	{
-        public StreetMapRuntime(ReadOnlyTargetRules Target) : base(Target)
-        {
-			PCHUsage = PCHUsageMode.NoSharedPCHs;
+        public StreetMapRuntime(ReadOnlyTargetRules Target)
+			: base(Target)
+		{
 			PrivateDependencyModuleNames.AddRange(
 				new string[] {
                     "Core",
@@ -15,9 +15,15 @@ namespace UnrealBuildTool.Rules
 					"RHI",
 					"RenderCore",
 					"ShaderCore",
-                    "Landscape",
                 }
 			);
+
+            if (Target.bBuildEditor == true)
+            {
+                //@TODO: Needed for FPropertyEditorModule::NotifyCustomizationModuleChanged()
+                //@TOOD: To move/implement in FStreetMapComponentDetails
+                PrivateDependencyModuleNames.Add("PropertyEditor");
+            }
         }
 	}
 }

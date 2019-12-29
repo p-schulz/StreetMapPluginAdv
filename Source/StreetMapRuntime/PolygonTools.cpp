@@ -1,7 +1,7 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
-#include "StreetMapRuntime.h"
 #include "PolygonTools.h"
+#include "StreetMapRuntime.h"
 
 
 // Based off "Efficient Polygon Triangulation" algorithm by John W. Ratcliff (http://flipcode.net/archives/Efficient_Polygon_Triangulation.shtml)
@@ -76,58 +76,3 @@ bool FPolygonTools::TriangulatePolygon( const TArray<FVector2D>& Polygon, TArray
 	return true;
 }
 
-
-
-#include "Landscape.h"
-#include "LandscapeHeightfieldCollisionComponent.h"
-
-class FLandscapeCollisionContext
-{
-private:
-	const bool IsLandscapeHit(const FVector& RayOrigin, const FVector& RayEndPoint, FVector& OutHitLocation)
-	{
-		static FName TraceTag = FName(TEXT("LandscapeTrace"));
-		TArray<FHitResult> Results;
-		// Each landscape component has 2 collision shapes, 1 of them is specific to landscape editor
-		// Trace only ECC_Visibility channel, so we do hit only Editor specific shape
-		World->LineTraceMultiByObjectType(Results, RayOrigin, RayEndPoint, FCollisionObjectQueryParams(ECollisionChannel::ECC_Visibility), FCollisionQueryParams(TraceTag, true));
-
-		bool bHitLandscape = false;
-
-		for (const FHitResult& HitResult : Results)
-		{
-			ULandscapeHeightfieldCollisionComponent* CollisionComponent = Cast<ULandscapeHeightfieldCollisionComponent>(HitResult.Component.Get());
-			if (CollisionComponent)
-			{
-				ALandscapeProxy* HitLandscape = CollisionComponent->GetLandscapeProxy();
-				if (HitLandscape)
-				{
-					OutHitLocation = HitResult.Location;
-					bHitLandscape = true;
-					break;
-				}
-			}
-		}
-
-		return bHitLandscape;
-	}
-
-	UWorld* World;
-
-public:
-	void CheckLandscapeDistance(const FVector& Position)
-	{
-		const FVector Start = Position;
-		FVector End = Position - (WORLD_MAX * FVector::UpVector);
-		FVector OutHit;
-		const bool IsAboveLandscape = IsLandscapeHit(Start, End, OutHit);
-
-		End = Position + (WORLD_MAX * FVector::UpVector);
-		const bool IsUnderneathLandscape = IsLandscapeHit(Start, End, OutHit);
-	}
-
-	FLandscapeCollisionContext(const UMeshComponent* InMeshComponent)
-	{
-		World = InMeshComponent->GetWorld();
-	}
-};

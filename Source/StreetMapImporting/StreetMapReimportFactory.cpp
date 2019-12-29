@@ -1,7 +1,7 @@
-// Copyright 2017 Mike Fricker. All Rights Reserved.
+// Copyright FZI Forschungszentrum Informatik Karlsruhe, 2019
 
-#include "StreetMapImporting.h"
 #include "StreetMapReimportFactory.h"
+#include "StreetMapImporting.h"
 #include "StreetMap.h"
 
 
@@ -17,9 +17,8 @@ bool UStreetMapReimportFactory::CanReimport( UObject* Obj, TArray<FString>& OutF
 	if( StreetMap != nullptr )
 	{
 		OutFilenames.Add( StreetMap->AssetImportData->GetFirstFilename() );
-		return true;
 	}
-	return false;
+	return true;
 }
 
 
